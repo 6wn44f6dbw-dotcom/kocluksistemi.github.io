@@ -75,7 +75,10 @@
                             <i class="fa-solid fa-lock absolute left-3.5 top-3 text-slate-400 text-sm"></i>
                             <input type="password" id="adminPasswordInput" required placeholder="******" class="w-full pl-10 pr-3 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none">
                         </div>
-                        <p class="text-[11px] text-slate-400 mt-1">Admin şifreniz: <code class="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-700">gizlibilgi</code></p>
+                        <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm text-slate-600 flex items-center gap-2 mt-2">
+                            <i class="fas fa-lock text-slate-400"></i>
+                            <span>Yönetici paneline erişmek için yetkili şifrenizi giriniz.</span>
+                        </div>
                     </div>
 
                     <button type="submit" class="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-sm shadow-md transition flex items-center justify-center space-x-2">
@@ -146,10 +149,29 @@
                 </div>
             </div>
 
+            <!-- Month Filter Bar for Student -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-sm">Aylık Soru & Ders Analizi</h3>
+                        <p class="text-xs text-slate-500">İncelemek istediğiniz ayı seçerek ders bazlı dağılımı görün.</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2 w-full sm:w-auto">
+                    <label class="text-xs font-bold text-slate-600 whitespace-nowrap">Dönem / Ay:</label>
+                    <select id="studentMonthSelect" onchange="renderStudentLogs()" class="w-full sm:w-auto px-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none font-bold text-brand-700 bg-slate-50">
+                        <option value="ALL">Tüm Zamanlar (Toplam)</option>
+                    </select>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
                     <div>
-                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Çözdüğüm Soru</p>
+                        <p id="studentStatTotalLabel" class="text-xs font-medium text-slate-500 uppercase tracking-wider">Çözülen Soru</p>
                         <h3 id="studentStatTotal" class="text-2xl font-extrabold text-slate-800 mt-1">0</h3>
                     </div>
                     <div class="w-12 h-12 bg-blue-50 text-brand-600 rounded-xl flex items-center justify-center text-xl">
@@ -189,6 +211,18 @@
                         <i class="fa-solid fa-user-tie"></i>
                     </div>
                 </div>
+            </div>
+
+            <!-- Monthly Subject Breakdown Progress Bars -->
+            <div id="studentMonthlySubjectBox" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-book-open text-brand-600"></i>
+                        <span id="studentSubjectBoxTitle">Seçilen Dönem Ders Bazlı Soru Dağılımı</span>
+                    </h3>
+                    <span id="studentSubjectBoxTotal" class="text-xs font-extrabold text-brand-600 bg-brand-50 px-2.5 py-1 rounded-lg">0 Soru</span>
+                </div>
+                <div id="studentSubjectList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -248,7 +282,7 @@
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                         <div class="flex items-center space-x-2">
                             <i class="fa-solid fa-chart-pie text-brand-600"></i>
-                            <h2 class="text-base font-bold text-slate-800">Ders Bazlı Dağılımım</h2>
+                            <h2 class="text-base font-bold text-slate-800">Ders Grafik Dağılımı</h2>
                         </div>
                     </div>
                     <div class="flex-1 min-h-[220px] relative flex items-center justify-center">
@@ -259,7 +293,7 @@
 
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div class="p-4 border-b border-slate-200 font-bold text-slate-800 text-sm flex items-center justify-between">
-                    <span>Soru Geçmişim</span>
+                    <span>Soru Geçmişi</span>
                     <span id="studentRecordCount" class="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">0 Kayıt</span>
                 </div>
                 <div class="overflow-x-auto">
@@ -286,14 +320,34 @@
             <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
                     <h2 class="text-lg font-bold text-slate-900">Koçluk Yapılan Öğrencilerim</h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Sorumluluğunuzdaki öğrencilerin soru çözümlerini takip edin ve koçluk notları yazın.</p>
+                    <p class="text-xs text-slate-500 mt-0.5">Sorumluluğunuzdaki öğrencilerin aylık soru çözümlerini ve ders analizlerini inceleyin.</p>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <label class="text-xs font-bold text-slate-600">Öğrenci Seç:</label>
-                    <select id="teacherStudentSelect" onchange="filterTeacherView()" class="px-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none font-semibold">
-                        <option value="ALL">Tüm Öğrencilerim</option>
-                    </select>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+                    <div class="flex items-center space-x-2">
+                        <label class="text-xs font-bold text-slate-600 whitespace-nowrap">Öğrenci:</label>
+                        <select id="teacherStudentSelect" onchange="filterTeacherView()" class="w-full sm:w-auto px-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none font-semibold">
+                            <option value="ALL">Tüm Öğrencilerim</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <label class="text-xs font-bold text-slate-600 whitespace-nowrap">Aylık Filtre:</label>
+                        <select id="teacherMonthSelect" onchange="filterTeacherView()" class="w-full sm:w-auto px-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none font-bold text-brand-700 bg-slate-50">
+                            <option value="ALL">Tüm Dönemler</option>
+                        </select>
+                    </div>
                 </div>
+            </div>
+
+            <!-- Detailed Monthly Summary Card for Teacher View -->
+            <div id="teacherMonthlySummaryBox" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 hidden">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-calendar-days text-brand-600 text-lg"></i>
+                        <h3 id="teacherMonthlySummaryTitle" class="font-bold text-slate-800 text-sm">Öğrenci Aylık Soru Karnesi</h3>
+                    </div>
+                    <span id="teacherMonthlySummaryBadge" class="text-xs font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">0 Soru</span>
+                </div>
+                <div id="teacherMonthlySubjectGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
             </div>
 
             <div id="teacherStudentCards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
@@ -622,6 +676,11 @@ function doPost(e) {
     <script>
         const DEFAULT_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyKzAqVtU6awfmntrOG7L99bNzDCek1c5n8mfzQI4KQWZnqKFLna5nRz5Tpgx7pFcWy/exec';
 
+        const MONTH_NAMES_TR = [
+            'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+            'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+        ];
+
         let appState = {
             currentUser: null,
             sheetUrl: localStorage.getItem('coaching_sheet_url') || DEFAULT_SHEET_URL,
@@ -641,11 +700,50 @@ function doPost(e) {
             countdownSeconds: 30
         };
 
+        // Helper: Get local Date YYYY-MM-DD string without timezone offset lag
+        function getLocalDateString(d = new Date()) {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Helper: Clean date to strictly YYYY-MM-DD (removes time, T, HH:MM)
+        function formatDateOnly(dateStr) {
+            if (!dateStr) return '-';
+            const clean = String(dateStr).split('T')[0].split(' ')[0].trim();
+            return clean || '-';
+        }
+
+        // Helper: Convert YYYY-MM or YYYY-MM-DD into "Eylül 2026"
+        function formatMonthYearTR(yearMonthStr) {
+            if (!yearMonthStr || yearMonthStr.length < 7) return yearMonthStr;
+            const parts = yearMonthStr.split('-');
+            const year = parts[0];
+            const monthIdx = parseInt(parts[1], 10) - 1;
+            if (monthIdx >= 0 && monthIdx < 12) {
+                return `${MONTH_NAMES_TR[monthIdx]} ${year}`;
+            }
+            return yearMonthStr;
+        }
+
+        // Helper: Extract unique YYYY-MM list from records
+        function getAvailableMonthsFromRecords(recordsList) {
+            const months = new Set();
+            recordsList.forEach(r => {
+                const cleanDate = formatDateOnly(r.date);
+                if (cleanDate && cleanDate.length >= 7 && cleanDate.includes('-')) {
+                    const ym = cleanDate.substring(0, 7); // "YYYY-MM"
+                    months.add(ym);
+                }
+            });
+            return Array.from(months).sort().reverse();
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('inputDate').value = getLocalDateString();
             document.getElementById('inputSheetUrl').value = appState.sheetUrl;
             
-            // First fetch immediately on start
             fetchDataFromSheet(false);
             startAutoSyncTimer();
         });
@@ -767,7 +865,6 @@ function doPost(e) {
         }
 
         function setupStudentView() {
-            // Keep current user object updated with synced student list data
             const refreshedStudent = appState.students.find(s => String(s.id) === String(appState.currentUser.data.id)) || appState.currentUser.data;
             appState.currentUser.data = refreshedStudent;
 
@@ -785,18 +882,43 @@ function doPost(e) {
             document.getElementById('studentCoachName').textContent = coach ? coach.name : 'Atanmadı';
             document.getElementById('studentCoachSubject').textContent = coach ? coach.subject : '-';
 
+            // Populate Student Month Dropdown
+            const studentName = appState.currentUser.data.name.toLowerCase().trim();
+            const studentRecords = appState.records.filter(r => r.student && r.student.toLowerCase().trim() === studentName);
+            const months = getAvailableMonthsFromRecords(studentRecords);
+            
+            const monthSelect = document.getElementById('studentMonthSelect');
+            const currentSelected = monthSelect.value;
+            monthSelect.innerHTML = '<option value="ALL">Tüm Zamanlar (Toplam)</option>';
+            months.forEach(ym => {
+                const opt = document.createElement('option');
+                opt.value = ym;
+                opt.textContent = formatMonthYearTR(ym);
+                monthSelect.appendChild(opt);
+            });
+            if (months.includes(currentSelected)) monthSelect.value = currentSelected;
+
             renderStudentLogs();
         }
 
         function renderStudentLogs() {
-            const studentName = appState.currentUser.data.name.toLowerCase();
-            const filtered = appState.records.filter(r => r.student && r.student.toLowerCase().trim() === studentName);
+            const studentName = appState.currentUser.data.name.toLowerCase().trim();
+            const selectedMonth = document.getElementById('studentMonthSelect').value;
+
+            let filtered = appState.records.filter(r => r.student && r.student.toLowerCase().trim() === studentName);
+
+            if (selectedMonth !== 'ALL') {
+                filtered = filtered.filter(r => {
+                    const cd = formatDateOnly(r.date);
+                    return cd.startsWith(selectedMonth);
+                });
+            }
 
             const tbody = document.getElementById('studentLogsTable');
             tbody.innerHTML = '';
 
             let totalQ = 0, totalC = 0, totalI = 0, totalB = 0;
-            const subjectCounts = {};
+            const subjectStats = {};
 
             filtered.forEach(r => {
                 const correct = parseInt(r.correct || 0);
@@ -809,12 +931,18 @@ function doPost(e) {
                 totalI += incorrect;
                 totalB += blank;
 
-                subjectCounts[r.subject] = (subjectCounts[r.subject] || 0) + total;
+                if (!subjectStats[r.subject]) {
+                    subjectStats[r.subject] = { correct: 0, incorrect: 0, blank: 0, total: 0 };
+                }
+                subjectStats[r.subject].correct += correct;
+                subjectStats[r.subject].incorrect += incorrect;
+                subjectStats[r.subject].blank += blank;
+                subjectStats[r.subject].total += total;
 
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 transition';
                 tr.innerHTML = `
-                    <td class="py-3 px-4 font-medium">${r.date || '-'}</td>
+                    <td class="py-3 px-4 font-medium">${formatDateOnly(r.date)}</td>
                     <td class="py-3 px-4"><span class="font-bold text-slate-800">${r.subject}</span> <span class="text-slate-400">(${r.topic || '-'})</span></td>
                     <td class="py-3 px-4 text-center font-bold text-emerald-600">${correct}</td>
                     <td class="py-3 px-4 text-center font-bold text-rose-600">${incorrect}</td>
@@ -833,21 +961,99 @@ function doPost(e) {
             document.getElementById('studentStatBreakdown').innerHTML = `<span class="text-emerald-600">${totalC} D</span> / <span class="text-rose-600">${totalI} Y</span> / <span class="text-amber-600">${totalB} B</span>`;
             document.getElementById('studentRecordCount').textContent = `${filtered.length} Kayıt`;
 
-            renderChart('studentChart', subjectCounts);
+            // Render Monthly Subject Progress List
+            const subjectBoxTitle = document.getElementById('studentSubjectBoxTitle');
+            const subjectBoxTotal = document.getElementById('studentSubjectBoxTotal');
+            const subjectListContainer = document.getElementById('studentSubjectList');
+
+            subjectBoxTitle.textContent = selectedMonth === 'ALL' 
+                ? 'Tüm Zamanlar Ders Bazlı Soru Dağılımı' 
+                : `${formatMonthYearTR(selectedMonth)} Ayı Ders Bazlı Dağılımı`;
+            subjectBoxTotal.textContent = `${totalQ} Soru`;
+
+            subjectListContainer.innerHTML = '';
+            const subjectKeys = Object.keys(subjectStats);
+
+            if (subjectKeys.length === 0) {
+                subjectListContainer.innerHTML = `<p class="text-xs text-slate-400 col-span-2 py-2">Bu döneme ait soru kaydı bulunamadı.</p>`;
+            } else {
+                subjectKeys.forEach(subj => {
+                    const st = subjectStats[subj];
+                    const percent = totalQ > 0 ? Math.round((st.total / totalQ) * 100) : 0;
+                    const subjAcc = st.total > 0 ? Math.round((st.correct / st.total) * 100) : 0;
+
+                    const item = document.createElement('div');
+                    item.className = 'bg-slate-50 p-3.5 rounded-xl border border-slate-100 space-y-2';
+                    item.innerHTML = `
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-bold text-slate-800">${subj}</span>
+                            <span class="font-bold text-slate-700">${st.total} Soru (%${percent}) <span class="text-emerald-600 ml-1">[%${subjAcc} Başarı]</span></span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden flex">
+                            <div class="bg-brand-600 h-full rounded-full" style="width: ${percent}%"></div>
+                        </div>
+                        <div class="flex items-center space-x-3 text-[11px] text-slate-500">
+                            <span class="text-emerald-600 font-semibold">${st.correct} Doğru</span>
+                            <span class="text-rose-600 font-semibold">${st.incorrect} Yanlış</span>
+                            <span class="text-amber-600 font-semibold">${st.blank} Boş</span>
+                        </div>
+                    `;
+                    subjectListContainer.appendChild(item);
+                });
+            }
+
+            // Simple Chart
+            const chartData = {};
+            subjectKeys.forEach(k => chartData[k] = subjectStats[k].total);
+            renderChart('studentChart', chartData);
         }
 
         function setupTeacherView() {
             const teacher = appState.currentUser.data;
             const myStudents = appState.students.filter(s => String(s.teacherId) === String(teacher.id));
 
-            const select = document.getElementById('teacherStudentSelect');
-            select.innerHTML = '<option value="ALL">Tüm Öğrencilerim</option>';
+            // Populate Student Filter Select
+            const selectS = document.getElementById('teacherStudentSelect');
+            const currentSelectedS = selectS.value;
+            selectS.innerHTML = '<option value="ALL">Tüm Öğrencilerim</option>';
             myStudents.forEach(s => {
                 const opt = document.createElement('option');
                 opt.value = s.name;
                 opt.textContent = `${s.name} (${s.class || '-'})`;
-                select.appendChild(opt);
+                selectS.appendChild(opt);
             });
+            selectS.value = currentSelectedS || 'ALL';
+
+            // Populate Month Filter Select
+            const myStudentNames = myStudents.map(s => s.name.toLowerCase().trim());
+            const myStudentRecords = appState.records.filter(r => r.student && myStudentNames.includes(r.student.toLowerCase().trim()));
+            const months = getAvailableMonthsFromRecords(myStudentRecords);
+
+            const selectM = document.getElementById('teacherMonthSelect');
+            const currentSelectedM = selectM.value;
+            selectM.innerHTML = '<option value="ALL">Tüm Dönemler</option>';
+            months.forEach(ym => {
+                const opt = document.createElement('option');
+                opt.value = ym;
+                opt.textContent = formatMonthYearTR(ym);
+                selectM.appendChild(opt);
+            });
+            if (months.includes(currentSelectedM)) selectM.value = currentSelectedM;
+
+            renderTeacherCardsAndSummary(myStudents);
+            renderTeacherLogs();
+        }
+
+        function filterTeacherView() {
+            const teacher = appState.currentUser.data;
+            const myStudents = appState.students.filter(s => String(s.teacherId) === String(teacher.id));
+            renderTeacherCardsAndSummary(myStudents);
+            renderTeacherLogs();
+        }
+
+        function renderTeacherCardsAndSummary(myStudents) {
+            const selectedMonth = document.getElementById('teacherMonthSelect').value;
+            const selectedStudent = document.getElementById('teacherStudentSelect').value;
 
             const container = document.getElementById('teacherStudentCards');
             container.innerHTML = '';
@@ -856,8 +1062,13 @@ function doPost(e) {
                 container.innerHTML = `<p class="text-xs text-slate-400 col-span-3 py-4 text-center">Size henüz öğrenci atanmamıştır.</p>`;
             } else {
                 myStudents.forEach(s => {
-                    const studentLogs = appState.records.filter(r => r.student && r.student.toLowerCase().trim() === s.name.toLowerCase());
-                    const totalQ = studentLogs.reduce((acc, r) => acc + parseInt(r.total || 0), 0);
+                    let sLogs = appState.records.filter(r => r.student && r.student.toLowerCase().trim() === s.name.toLowerCase().trim());
+
+                    if (selectedMonth !== 'ALL') {
+                        sLogs = sLogs.filter(r => formatDateOnly(r.date).startsWith(selectedMonth));
+                    }
+
+                    const totalQ = sLogs.reduce((acc, r) => acc + parseInt(r.total || 0), 0);
 
                     const card = document.createElement('div');
                     card.className = 'bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3';
@@ -881,26 +1092,92 @@ function doPost(e) {
                 });
             }
 
-            renderTeacherLogs();
-        }
+            // Render Monthly Summary Grid
+            const summaryBox = document.getElementById('teacherMonthlySummaryBox');
+            const summaryTitle = document.getElementById('teacherMonthlySummaryTitle');
+            const summaryBadge = document.getElementById('teacherMonthlySummaryBadge');
+            const summaryGrid = document.getElementById('teacherMonthlySubjectGrid');
 
-        function filterTeacherView() { renderTeacherLogs(); }
+            if (selectedStudent !== 'ALL' || selectedMonth !== 'ALL') {
+                summaryBox.classList.remove('hidden');
+
+                const titleText = selectedStudent !== 'ALL' ? `${selectedStudent} - Soru Karnesi` : 'Öğrencilerinizin Aylık Soru Karnesi';
+                const monthText = selectedMonth !== 'ALL' ? ` (${formatMonthYearTR(selectedMonth)})` : ' (Tüm Dönemler)';
+                summaryTitle.textContent = titleText + monthText;
+
+                // Filter records for summary grid
+                let summaryRecords = appState.records.filter(r => {
+                    if (!r.student) return false;
+                    const matchStudent = selectedStudent === 'ALL' 
+                        ? myStudents.some(s => s.name.toLowerCase().trim() === r.student.toLowerCase().trim())
+                        : r.student.toLowerCase().trim() === selectedStudent.toLowerCase().trim();
+                    const matchMonth = selectedMonth === 'ALL' || formatDateOnly(r.date).startsWith(selectedMonth);
+                    return matchStudent && matchMonth;
+                });
+
+                let grandTotal = 0;
+                const subjectAgg = {};
+
+                summaryRecords.forEach(r => {
+                    const c = parseInt(r.correct || 0);
+                    const i = parseInt(r.incorrect || 0);
+                    const b = parseInt(r.blank || 0);
+                    const tot = parseInt(r.total || (c + i + b));
+
+                    grandTotal += tot;
+
+                    if (!subjectAgg[r.subject]) subjectAgg[r.subject] = { correct: 0, incorrect: 0, blank: 0, total: 0 };
+                    subjectAgg[r.subject].correct += c;
+                    subjectAgg[r.subject].incorrect += i;
+                    subjectAgg[r.subject].blank += b;
+                    subjectAgg[r.subject].total += tot;
+                });
+
+                summaryBadge.textContent = `${grandTotal} Soru Çözüldü`;
+                summaryGrid.innerHTML = '';
+
+                const subjects = Object.keys(subjectAgg);
+                if (subjects.length === 0) {
+                    summaryGrid.innerHTML = `<p class="text-xs text-slate-400 col-span-3 py-2">Seçilen kriterlerde ders verisi bulunamadı.</p>`;
+                } else {
+                    subjects.forEach(subj => {
+                        const st = subjectAgg[subj];
+                        const acc = st.total > 0 ? Math.round((st.correct / st.total) * 100) : 0;
+
+                        const item = document.createElement('div');
+                        item.className = 'bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-col justify-between space-y-1.5';
+                        item.innerHTML = `
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="font-bold text-slate-800">${subj}</span>
+                                <span class="font-extrabold text-brand-600">${st.total} Soru</span>
+                            </div>
+                            <div class="flex items-center justify-between text-[11px] text-slate-500">
+                                <span><strong class="text-emerald-600">${st.correct} D</strong> / <strong class="text-rose-600">${st.incorrect} Y</strong> / <strong class="text-amber-600">${st.blank} B</strong></span>
+                                <span class="font-bold text-emerald-600">%${acc} Başarı</span>
+                            </div>
+                        `;
+                        summaryGrid.appendChild(item);
+                    });
+                }
+            } else {
+                summaryBox.classList.add('hidden');
+            }
+        }
 
         function renderTeacherLogs() {
             const teacher = appState.currentUser.data;
             const myStudents = appState.students.filter(s => String(s.teacherId) === String(teacher.id));
             const myStudentNames = myStudents.map(s => s.name.toLowerCase().trim());
 
-            const selectedFilter = document.getElementById('teacherStudentSelect').value;
+            const selectedStudent = document.getElementById('teacherStudentSelect').value;
+            const selectedMonth = document.getElementById('teacherMonthSelect').value;
 
             const filtered = appState.records.filter(r => {
                 if (!r.student) return false;
                 const name = r.student.toLowerCase().trim();
-                if (selectedFilter === 'ALL') {
-                    return myStudentNames.includes(name);
-                } else {
-                    return name === selectedFilter.toLowerCase().trim();
-                }
+                const matchStudent = selectedStudent === 'ALL' ? myStudentNames.includes(name) : name === selectedStudent.toLowerCase().trim();
+                const matchMonth = selectedMonth === 'ALL' || formatDateOnly(r.date).startsWith(selectedMonth);
+                return matchStudent && matchMonth;
             });
 
             const tbody = document.getElementById('teacherLogsTable');
@@ -910,7 +1187,7 @@ function doPost(e) {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 transition';
                 tr.innerHTML = `
-                    <td class="py-3 px-4 font-medium">${r.date || '-'}</td>
+                    <td class="py-3 px-4 font-medium">${formatDateOnly(r.date)}</td>
                     <td class="py-3 px-4 font-bold text-slate-800">${r.student}</td>
                     <td class="py-3 px-4"><span class="font-semibold text-slate-700">${r.subject}</span> <span class="text-slate-400">(${r.topic || '-'})</span></td>
                     <td class="py-3 px-4 text-center font-bold text-emerald-600">${r.correct || 0}</td>
@@ -1044,7 +1321,7 @@ function doPost(e) {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-slate-50 transition';
                 tr.innerHTML = `
-                    <td class="py-3 px-4 font-medium">${r.date || '-'}</td>
+                    <td class="py-3 px-4 font-medium">${formatDateOnly(r.date)}</td>
                     <td class="py-3 px-4 font-bold text-slate-800">${r.student || '-'}</td>
                     <td class="py-3 px-4"><span class="font-semibold text-slate-700">${r.subject}</span> <span class="text-slate-400">(${r.topic || '-'})</span></td>
                     <td class="py-3 px-4 text-center font-bold text-emerald-600">${r.correct || 0}</td>

@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="tr" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Okul Koçluk & Soru Takip Sistemi</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+</head>
+<body class="h-full flex flex-col bg-slate-50 text-slate-800 font-sans antialiased">
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-brand-900 to-slate-900">
+        <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
+            <div class="bg-brand-600 p-6 text-white text-center">
+    <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm text-slate-600 flex items-center gap-2">
+      <i class="fas fa-lock text-slate-400"></i>
+      <span>Yönetici paneline erişmek için yetkili şifrenizi giriniz.</span>
+    </div>
+                <h2 class="text-xl font-extrabold tracking-tight">Okul Koçluk Sistemi</h2>
+                <p class="text-xs text-blue-100 mt-1">Öğrenci & Öğretmen Takip Paneli</p>
+            </div>
+
+            <div class="p-6">
+                <div class="flex bg-slate-100 p-1 rounded-xl mb-6">
+                    <button id="tabUserLoginBtn" onclick="switchLoginTab('user')" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white text-slate-800 shadow-sm">
+                        <i class="fa-solid fa-user-key mr-1"></i> Kod ile Giriş
+                    </button>
+                    <button id="tabAdminLoginBtn" onclick="switchLoginTab('admin')" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800">
+                        <i class="fa-solid fa-user-shield mr-1"></i> Admin Girişi
+                    </button>
+                </div>
+
+                <form id="formUserLogin" onsubmit="handleUserLogin(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Giriş Kodu (Öğrenci / Öğretmen)</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-key absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+                            <input type="text" id="loginCodeInput" required placeholder="Örn: OGR201 veya OGT101" class="w-full pl-10 pr-3 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none uppercase font-mono tracking-wider">
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-1">E-Tabloda kayıtlı kişisel kodunuzu giriniz.</p>
+                    </div>
+
+                    <button type="submit" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-sm shadow-md transition flex items-center justify-center space-x-2">
+                        <span>Sisteme Giriş Yap</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </button>
+                </form>
+
+                <form id="formAdminLogin" onsubmit="handleAdminLogin(event)" class="space-y-4 hidden">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Yönetici Şifresi</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-lock absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+                            <input type="password" id="adminPasswordInput" required placeholder="******" class="w-full pl-10 pr-3 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none">
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-1">Admin şifreniz: <code class="bg-slate-100 px-1 py-0.5 rounded font-mono text-slate-700">gizlibilgi</code></p>
+                    </div>
+
+                    <button type="submit" class="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-sm shadow-md transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-shield-halved text-xs"></i>
+                        <span>Admin Paneline Giriş</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <header id="mainHeader" class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white font-bold text-xl shadow-md">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <h1 class="text-base font-bold text-slate-900 leading-tight">Okul Koçluk Sistemi</h1>
+                        <span id="userRoleBadge" class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-blue-100 text-blue-800">
+                            Öğrenci
+                        </span>
+                    </div>
+                    <p id="userNameDisplay" class="text-xs text-slate-500 font-medium">Hoş geldiniz</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <div id="syncBadge" class="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                    <span class="relative flex h-2 w-2">
+                        <span id="syncDotPing" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                        <span id="syncDot" class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                    </span>
+                    <span id="syncStatusText">E-Tablo Eşitleniyor...</span>
+                </div>
+
+                <button onclick="fetchDataFromSheet(true)" class="p-2 text-slate-600 hover:text-brand-600 hover:bg-slate-100 rounded-lg transition" title="Şimdi Yenile">
+                    <i id="syncIcon" class="fa-solid fa-arrows-rotate text-sm"></i>
+                </button>
+
+                <button id="btnAdminSettings" onclick="openModal('settingsModal')" class="hidden p-2 text-slate-600 hover:text-brand-600 hover:bg-slate-100 rounded-lg transition" title="E-Tablo Ayarları ve Kod">
+                    <i class="fa-solid fa-gear text-sm"></i>
+                </button>
+
+                <button onclick="handleLogout()" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 border border-rose-200">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span class="hidden sm:inline">Çıkış Yap</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main id="mainContainer" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 hidden">
+
+        <!-- STUDENT VIEW -->
+        <div id="studentView" class="space-y-6 hidden">
+            <div id="studentNoteBanner" class="hidden bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl p-5 shadow-md relative overflow-hidden">
+                <div class="relative z-10">
+                    <div class="flex items-center space-x-2 text-blue-200 text-xs font-bold uppercase tracking-wider mb-1">
+                        <i class="fa-solid fa-comment-dots"></i>
+                        <span>Koç Öğretmen Değerlendirme Notu</span>
+                    </div>
+                    <p id="studentNoteText" class="text-sm sm:text-base font-semibold leading-relaxed">
+                        "Düzenli soru çözümlerine devam et!"
+                    </p>
+                    <p id="studentNoteAuthor" class="text-xs text-blue-200 mt-2 font-medium">- Koç Öğretmen</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Çözdüğüm Soru</p>
+                        <h3 id="studentStatTotal" class="text-2xl font-extrabold text-slate-800 mt-1">0</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-50 text-brand-600 rounded-xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-list-check"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Başarı Oranım</p>
+                        <h3 id="studentStatAccuracy" class="text-2xl font-extrabold text-emerald-600 mt-1">%0</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Doğru / Yanlış / Boş</p>
+                        <div id="studentStatBreakdown" class="text-sm font-bold text-slate-700 mt-1">
+                            <span class="text-emerald-600">0 D</span> / <span class="text-rose-600">0 Y</span> / <span class="text-amber-600">0 B</span>
+                        </div>
+                    </div>
+                    <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-bullseye"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Koç Öğretmenim</p>
+                        <h3 id="studentCoachName" class="text-sm font-bold text-slate-800 mt-1">Atanmadı</h3>
+                        <p id="studentCoachSubject" class="text-xs text-slate-400 mt-0.5">-</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-user-tie"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm lg:col-span-1">
+                    <div class="flex items-center space-x-2 border-b border-slate-100 pb-3 mb-4">
+                        <i class="fa-solid fa-plus-circle text-brand-600"></i>
+                        <h2 class="text-base font-bold text-slate-800">Soru Çözümü Ekle</h2>
+                    </div>
+
+                    <form id="studentQuestionForm" onsubmit="handleQuestionSubmit(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Ders Seçin</label>
+                            <select id="inputSubject" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none">
+                                <option value="">Ders Seçiniz</option>
+                                <option value="Matematik">Matematik</option>
+                                <option value="Fizik">Fizik</option>
+                                <option value="Kimya">Kimya</option>
+                                <option value="Biyoloji">Biyoloji</option>
+                                <option value="Türkçe">Türkçe</option>
+                                <option value="Tarih">Tarih</option>
+                                <option value="Coğrafya">Coğrafya</option>
+                                <option value="Felsefe/Din">Felsefe / Din</option>
+                                <option value="Yabancı Dil">Yabancı Dil</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Konu / Test Adı</label>
+                            <input type="text" id="inputTopic" placeholder="Örn: Üslü Sayılar, Paragraf" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none">
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Doğru</label>
+                                <input type="number" id="inputCorrect" min="0" value="0" required class="w-full px-2.5 py-2 text-sm border border-slate-300 rounded-xl text-emerald-600 font-bold focus:ring-2 focus:ring-brand-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Yanlış</label>
+                                <input type="number" id="inputIncorrect" min="0" value="0" required class="w-full px-2.5 py-2 text-sm border border-slate-300 rounded-xl text-rose-600 font-bold focus:ring-2 focus:ring-brand-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Boş</label>
+                                <input type="number" id="inputBlank" min="0" value="0" required class="w-full px-2.5 py-2 text-sm border border-slate-300 rounded-xl text-amber-600 font-bold focus:ring-2 focus:ring-brand-500 outline-none">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Tarih</label>
+                            <input type="date" id="inputDate" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none">
+                        </div>
+
+                        <button type="submit" id="btnSubmitQuestion" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-sm shadow transition flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            <span>Kaydet ve E-Tabloya Gönder</span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2 flex flex-col">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-chart-pie text-brand-600"></i>
+                            <h2 class="text-base font-bold text-slate-800">Ders Bazlı Dağılımım</h2>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-h-[220px] relative flex items-center justify-center">
+                        <canvas id="studentChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-4 border-b border-slate-200 font-bold text-slate-800 text-sm flex items-center justify-between">
+                    <span>Soru Geçmişim</span>
+                    <span id="studentRecordCount" class="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">0 Kayıt</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 uppercase text-[11px] font-semibold border-b border-slate-200">
+                                <th class="py-3 px-4">Tarih</th>
+                                <th class="py-3 px-4">Ders / Konu</th>
+                                <th class="py-3 px-4 text-center">Doğru</th>
+                                <th class="py-3 px-4 text-center">Yanlış</th>
+                                <th class="py-3 px-4 text-center">Boş</th>
+                                <th class="py-3 px-4 text-center">Toplam</th>
+                                <th class="py-3 px-4 text-right">İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentLogsTable" class="divide-y divide-slate-200 text-xs text-slate-700"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TEACHER VIEW -->
+        <div id="teacherView" class="space-y-6 hidden">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Koçluk Yapılan Öğrencilerim</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Sorumluluğunuzdaki öğrencilerin soru çözümlerini takip edin ve koçluk notları yazın.</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label class="text-xs font-bold text-slate-600">Öğrenci Seç:</label>
+                    <select id="teacherStudentSelect" onchange="filterTeacherView()" class="px-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none font-semibold">
+                        <option value="ALL">Tüm Öğrencilerim</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="teacherStudentCards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+                    <h3 class="font-bold text-slate-800 text-sm">Öğrenci Soru Kayıt Detayları</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 uppercase text-[11px] font-semibold border-b border-slate-200">
+                                <th class="py-3 px-4">Tarih</th>
+                                <th class="py-3 px-4">Öğrenci</th>
+                                <th class="py-3 px-4">Ders / Konu</th>
+                                <th class="py-3 px-4 text-center">Doğru</th>
+                                <th class="py-3 px-4 text-center">Yanlış</th>
+                                <th class="py-3 px-4 text-center">Boş</th>
+                                <th class="py-3 px-4 text-center">Toplam</th>
+                                <th class="py-3 px-4 text-right">İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacherLogsTable" class="divide-y divide-slate-200 text-xs text-slate-700"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADMIN VIEW -->
+        <div id="adminView" class="space-y-6 hidden">
+            <div class="flex border-b border-slate-200 space-x-4">
+                <button id="adminTabUsersBtn" onclick="switchAdminSubTab('users')" class="py-2.5 px-4 text-xs font-bold border-b-2 border-brand-600 text-brand-600">
+                    <i class="fa-solid fa-users-gear mr-1.5"></i> Kullanıcı Yönetimi & Kodlar
+                </button>
+                <button id="adminTabAssignBtn" onclick="switchAdminSubTab('assign')" class="py-2.5 px-4 text-xs font-bold text-slate-500 hover:text-slate-800 border-b-2 border-transparent">
+                    <i class="fa-solid fa-link mr-1.5"></i> Koçluk Eşleştirmeleri
+                </button>
+                <button id="adminTabLogsBtn" onclick="switchAdminSubTab('logs')" class="py-2.5 px-4 text-xs font-bold text-slate-500 hover:text-slate-800 border-b-2 border-transparent">
+                    <i class="fa-solid fa-database mr-1.5"></i> Tüm Soru Kayıtları
+                </button>
+            </div>
+
+            <!-- ADMIN SUB-TAB 1: USERS -->
+            <div id="adminUsersSection" class="space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-chalkboard-user text-emerald-600"></i>
+                                <span>Öğretmenler</span>
+                            </h3>
+                            <button onclick="openModal('addTeacherModal')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs transition flex items-center gap-1">
+                                <i class="fa-solid fa-plus"></i> Öğretmen Ekle
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
+                                        <th class="py-2 px-3">Adı Soyadı</th>
+                                        <th class="py-2 px-3">Branş</th>
+                                        <th class="py-2 px-3">Giriş Kodu</th>
+                                        <th class="py-2 px-3 text-right">İşlem</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminTeachersTable" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-user-graduate text-blue-600"></i>
+                                <span>Öğrenciler</span>
+                            </h3>
+                            <button onclick="openModal('addStudentModal')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs transition flex items-center gap-1">
+                                <i class="fa-solid fa-plus"></i> Öğrenci Ekle
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 border-b border-slate-200 font-semibold uppercase text-[10px]">
+                                        <th class="py-2 px-3">Adı Soyadı</th>
+                                        <th class="py-2 px-3">Sınıf</th>
+                                        <th class="py-2 px-3">Giriş Kodu</th>
+                                        <th class="py-2 px-3 text-right">İşlem</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminStudentsTable" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADMIN SUB-TAB 2: ASSIGNMENT -->
+            <div id="adminAssignSection" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 hidden">
+                <div class="border-b border-slate-100 pb-3">
+                    <h3 class="font-bold text-slate-800 text-sm">Koç Öğretmen - Öğrenci Eşleştirme Paneli</h3>
+                    <p class="text-xs text-slate-500">Değişiklikler anında Google E-Tabloya yazılır.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="adminAssignCards"></div>
+            </div>
+
+            <!-- ADMIN SUB-TAB 3: LOGS -->
+            <div id="adminLogsSection" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hidden">
+                <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+                    <h3 class="font-bold text-slate-800 text-sm">Tüm Soru Kayıtları (E-Tablo)</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 uppercase text-[11px] font-semibold border-b border-slate-200">
+                                <th class="py-3 px-4">Tarih</th>
+                                <th class="py-3 px-4">Öğrenci</th>
+                                <th class="py-3 px-4">Ders / Konu</th>
+                                <th class="py-3 px-4 text-center">Doğru</th>
+                                <th class="py-3 px-4 text-center">Yanlış</th>
+                                <th class="py-3 px-4 text-center">Boş</th>
+                                <th class="py-3 px-4 text-center">Toplam</th>
+                                <th class="py-3 px-4 text-right">İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminLogsTable" class="divide-y divide-slate-200 text-xs text-slate-700"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL: Add Teacher -->
+    <div id="addTeacherModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-800 text-base">Yeni Öğretmen Oluştur</h3>
+                <button onclick="closeModal('addTeacherModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleCreateTeacher(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Öğretmen Adı Soyadı</label>
+                    <input type="text" id="newTeacherName" required placeholder="Örn: Ahmet Yılmaz" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Branş</label>
+                    <input type="text" id="newTeacherSubject" required placeholder="Örn: Matematik" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Giriş Kodu</label>
+                    <input type="text" id="newTeacherCode" required placeholder="Örn: OGT103" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-brand-500 uppercase font-mono">
+                </div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="closeModal('addTeacherModal')" class="px-4 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-600">İptal</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow">Kaydet & E-Tabloya Yaz</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Add Student -->
+    <div id="addStudentModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-800 text-base">Yeni Öğrenci Oluştur</h3>
+                <button onclick="closeModal('addStudentModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form onsubmit="handleCreateStudent(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Öğrenci Adı Soyadı</label>
+                    <input type="text" id="newStudentName" required placeholder="Örn: Zeynep Kaya" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Sınıf / Şube</label>
+                    <input type="text" id="newStudentClass" placeholder="Örn: 12-A" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Giriş Kodu</label>
+                    <input type="text" id="newStudentCode" required placeholder="Örn: OGR203" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-brand-500 uppercase font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Atanacak Koç Öğretmen</label>
+                    <select id="newStudentTeacher" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="">Atama Yapma (Sonra Seçilecek)</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="closeModal('addStudentModal')" class="px-4 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-600">İptal</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow">Kaydet & E-Tabloya Yaz</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Teacher Note Writer -->
+    <div id="teacherNoteModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-800 text-base">Öğrenciye Koçluk Notu Yaz</h3>
+                <button onclick="closeModal('teacherNoteModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-3">
+                <p id="noteModalStudentName" class="text-xs font-bold text-brand-600">Öğrenci: Ali Yılmaz</p>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Değerlendirme Notunuz</label>
+                    <textarea id="teacherNoteInput" rows="4" placeholder="Öğrencinin ekrana yansıyacak koçluk notu..." class="w-full px-3 py-2 text-xs border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+                </div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button onclick="closeModal('teacherNoteModal')" class="px-4 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-600">İptal</button>
+                    <button onclick="saveTeacherNote()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow">Notu Kaydet & Gönder</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Settings & Code Guide -->
+    <div id="settingsModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                    <i class="fa-solid fa-gears text-brand-600"></i>
+                    <span>Google E-Tablo Entegrasyon Ayarları</span>
+                </h3>
+                <button onclick="closeModal('settingsModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Google Apps Script Web Uygulaması URL</label>
+                    <input type="url" id="inputSheetUrl" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3 py-2 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                </div>
+
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                    <p class="font-bold text-slate-800">Tüm Kullanıcıların E-Tabloya Kaydolması İçin Apps Script Kodu:</p>
+                    <p class="text-slate-600">Google E-Tablonuzda <code class="bg-slate-200 px-1 rounded">Uzantılar > Apps Script</code> bölümüne bu kodu yapıştırıp **Yeni Dağıtım (Web Uygulaması - Herkes)** olarak yayınlayın:</p>
+                    <pre class="bg-slate-900 text-slate-200 p-3 rounded-xl overflow-x-auto text-[10px] font-mono leading-relaxed select-all">
+function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  var sheetLogs = ss.getSheetByName("Kayıtlar") || ss.insertSheet("Kayıtlar");
+  var sheetTeachers = ss.getSheetByName("Öğretmenler") || ss.insertSheet("Öğretmenler");
+  var sheetStudents = ss.getSheetByName("Öğrenciler") || ss.insertSheet("Öğrenciler");
+  
+  return ContentService.createTextOutput(JSON.stringify({
+    records: getSheetData(sheetLogs),
+    teachers: getSheetData(sheetTeachers),
+    students: getSheetData(sheetStudents)
+  })).setMimeType(ContentService.MimeType.JSON);
+}
+
+function getSheetData(sheet) {
+  var rows = sheet.getDataRange().getValues();
+  if (rows.length < 2) return [];
+  var headers = rows[0];
+  var result = [];
+  for (var i = 1; i < rows.length; i++) {
+    var obj = {};
+    for (var j = 0; j < headers.length; j++) {
+      obj[headers[j]] = rows[i][j];
+    }
+    result.push(obj);
+  }
+  return result;
+}
+
+function doPost(e) {
+  var lock = LockService.getScriptLock();
+  lock.tryLock(10000);
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var contents = JSON.parse(e.postData.contents);
+    var action = contents.action;
+    
+    if (action === "addRecord") {
+      var sheet = ss.getSheetByName("Kayıtlar") || ss.insertSheet("Kayıtlar");
+      if (sheet.getLastRow() === 0) sheet.appendRow(["id", "date", "student", "subject", "topic", "correct", "incorrect", "blank", "total"]);
+      var d = contents.data;
+      sheet.appendRow([d.id, d.date, d.student, d.subject, d.topic, d.correct, d.incorrect, d.blank, d.total]);
+    } 
+    else if (action === "deleteRecord") {
+      var sheet = ss.getSheetByName("Kayıtlar");
+      if (sheet) {
+        var data = sheet.getDataRange().getValues();
+        for (var i = data.length - 1; i >= 1; i--) {
+          if (String(data[i][0]) === String(contents.id)) {
+            sheet.deleteRow(i + 1);
+            break;
+          }
+        }
+      }
+    }
+    else if (action === "syncUsers") {
+      if (contents.teachers) {
+        var sheetT = ss.getSheetByName("Öğretmenler") || ss.insertSheet("Öğretmenler");
+        sheetT.clear();
+        sheetT.appendRow(["id", "name", "subject", "code"]);
+        contents.teachers.forEach(function(t) { sheetT.appendRow([t.id, t.name, t.subject, t.code]); });
+      }
+      if (contents.students) {
+        var sheetS = ss.getSheetByName("Öğrenciler") || ss.insertSheet("Öğrenciler");
+        sheetS.clear();
+        sheetS.appendRow(["id", "name", "class", "code", "teacherId", "note"]);
+        contents.students.forEach(function(s) { sheetS.appendRow([s.id, s.name, s.class || "", s.code, s.teacherId || "", s.note || ""]); });
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({ status: "success" })).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() })).setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock();
+  }
+}</pre>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeModal('settingsModal')" class="px-4 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-600">İptal</button>
+                <button onclick="saveSettings()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold shadow">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <script>
+        const DEFAULT_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyKzAqVtU6awfmntrOG7L99bNzDCek1c5n8mfzQI4KQWZnqKFLna5nRz5Tpgx7pFcWy/exec';
+
+        let appState = {
+            currentUser: null,
+            sheetUrl: localStorage.getItem('coaching_sheet_url') || DEFAULT_SHEET_URL,
+            records: [],
+            teachers: JSON.parse(localStorage.getItem('coaching_teachers')) || [
+                { id: 'T1', name: 'Ahmet Yılmaz', subject: 'Matematik', code: 'OGT101' },
+                { id: 'T2', name: 'Ayşe Kaya', subject: 'Türkçe/Edebiyat', code: 'OGT102' }
+            ],
+            students: JSON.parse(localStorage.getItem('coaching_students')) || [
+                { id: 'S1', name: 'Ali Yılmaz', class: '12-A', code: 'OGR201', teacherId: 'T1', note: 'Matematik denemelerine ağırlık verilmeli.' },
+                { id: 'S2', name: 'Zeynep Kaya', class: '12-B', code: 'OGR202', teacherId: 'T1', note: 'Paragraf çözümleri harika gidiyor!' },
+                { id: 'S3', name: 'Can Demir', class: '11-A', code: 'OGR203', teacherId: 'T2', note: '' }
+            ],
+            selectedStudentForNote: null,
+            chartInstance: null,
+            autoSyncTimer: null,
+            countdownSeconds: 30
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('inputSheetUrl').value = appState.sheetUrl;
+            
+            // First fetch immediately on start
+            fetchDataFromSheet(false);
+            startAutoSyncTimer();
+        });
+
+        function switchLoginTab(tab) {
+            const formUser = document.getElementById('formUserLogin');
+            const formAdmin = document.getElementById('formAdminLogin');
+            const btnUser = document.getElementById('tabUserLoginBtn');
+            const btnAdmin = document.getElementById('tabAdminLoginBtn');
+
+            if (tab === 'user') {
+                formUser.classList.remove('hidden');
+                formAdmin.classList.add('hidden');
+                btnUser.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white text-slate-800 shadow-sm';
+                btnAdmin.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800';
+            } else {
+                formUser.classList.add('hidden');
+                formAdmin.classList.remove('hidden');
+                btnAdmin.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-white text-slate-800 shadow-sm';
+                btnUser.className = 'flex-1 py-2 text-xs font-bold rounded-lg transition-all text-slate-500 hover:text-slate-800';
+            }
+        }
+
+        function handleUserLogin(e) {
+            e.preventDefault();
+            const code = document.getElementById('loginCodeInput').value.trim().toUpperCase();
+            
+            // Check student against live appState.students
+            const student = appState.students.find(s => String(s.code).toUpperCase() === code);
+            if (student) {
+                appState.currentUser = { role: 'student', data: student };
+                showToast(`Hoş geldiniz ${student.name}`, 'success');
+                initAppView();
+                return;
+            }
+
+            // Check teacher against live appState.teachers
+            const teacher = appState.teachers.find(t => String(t.code).toUpperCase() === code);
+            if (teacher) {
+                appState.currentUser = { role: 'teacher', data: teacher };
+                showToast(`Hoş geldiniz ${teacher.name} Hocam`, 'success');
+                initAppView();
+                return;
+            }
+
+            showToast('Geçersiz giriş kodu! Lütfen kodunuzu kontrol edin.', 'error');
+        }
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const pass = document.getElementById('adminPasswordInput').value;
+            if (pass === 'admin.6565') {
+                appState.currentUser = { role: 'admin', data: { name: 'Yönetici' } };
+                showToast('Admin girişi başarılı', 'success');
+                initAppView();
+            } else {
+                showToast('Hatalı admin şifresi!', 'error');
+            }
+        }
+
+        function quickLogin(code) {
+            document.getElementById('loginCodeInput').value = code;
+            switchLoginTab('user');
+            handleUserLogin(new Event('submit'));
+        }
+
+        function quickLoginAdmin() {
+            document.getElementById('adminPasswordInput').value = 'admin.6565';
+            switchLoginTab('admin');
+            handleAdminLogin(new Event('submit'));
+        }
+
+        function handleLogout() {
+            appState.currentUser = null;
+            document.getElementById('mainHeader').classList.add('hidden');
+            document.getElementById('mainContainer').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('loginCodeInput').value = '';
+            showToast('Oturum kapatıldı.', 'info');
+        }
+
+        function initAppView() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainHeader').classList.remove('hidden');
+            document.getElementById('mainContainer').classList.remove('hidden');
+
+            const roleBadge = document.getElementById('userRoleBadge');
+            const nameDisplay = document.getElementById('userNameDisplay');
+            const btnSettings = document.getElementById('btnAdminSettings');
+
+            document.getElementById('studentView').classList.add('hidden');
+            document.getElementById('teacherView').classList.add('hidden');
+            document.getElementById('adminView').classList.add('hidden');
+
+            if (appState.currentUser.role === 'student') {
+                roleBadge.textContent = 'ÖĞRENCİ';
+                roleBadge.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-blue-100 text-blue-800';
+                nameDisplay.textContent = `${appState.currentUser.data.name} (${appState.currentUser.data.class || 'Sınıf Yok'})`;
+                btnSettings.classList.add('hidden');
+                document.getElementById('studentView').classList.remove('hidden');
+                setupStudentView();
+            } 
+            else if (appState.currentUser.role === 'teacher') {
+                roleBadge.textContent = 'ÖĞRETMEN';
+                roleBadge.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800';
+                nameDisplay.textContent = `${appState.currentUser.data.name} (${appState.currentUser.data.subject})`;
+                btnSettings.classList.add('hidden');
+                document.getElementById('teacherView').classList.remove('hidden');
+                setupTeacherView();
+            } 
+            else if (appState.currentUser.role === 'admin') {
+                roleBadge.textContent = 'ADMİN';
+                roleBadge.className = 'px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-purple-100 text-purple-800';
+                nameDisplay.textContent = 'Sistem Yöneticisi';
+                btnSettings.classList.remove('hidden');
+                document.getElementById('adminView').classList.remove('hidden');
+                setupAdminView();
+            }
+        }
+
+        function setupStudentView() {
+            // Keep current user object updated with synced student list data
+            const refreshedStudent = appState.students.find(s => String(s.id) === String(appState.currentUser.data.id)) || appState.currentUser.data;
+            appState.currentUser.data = refreshedStudent;
+
+            const noteBanner = document.getElementById('studentNoteBanner');
+            if (refreshedStudent.note && refreshedStudent.note.trim() !== '') {
+                noteBanner.classList.remove('hidden');
+                document.getElementById('studentNoteText').textContent = `"${refreshedStudent.note}"`;
+                const teacher = appState.teachers.find(t => String(t.id) === String(refreshedStudent.teacherId));
+                document.getElementById('studentNoteAuthor').textContent = teacher ? `- Koç Öğretmen: ${teacher.name}` : '- Koç Öğretmen';
+            } else {
+                noteBanner.classList.add('hidden');
+            }
+
+            const coach = appState.teachers.find(t => String(t.id) === String(refreshedStudent.teacherId));
+            document.getElementById('studentCoachName').textContent = coach ? coach.name : 'Atanmadı';
+            document.getElementById('studentCoachSubject').textContent = coach ? coach.subject : '-';
+
+            renderStudentLogs();
+        }
+
+        function renderStudentLogs() {
+            const studentName = appState.currentUser.data.name.toLowerCase();
+            const filtered = appState.records.filter(r => r.student && r.student.toLowerCase().trim() === studentName);
+
+            const tbody = document.getElementById('studentLogsTable');
+            tbody.innerHTML = '';
+
+            let totalQ = 0, totalC = 0, totalI = 0, totalB = 0;
+            const subjectCounts = {};
+
+            filtered.forEach(r => {
+                const correct = parseInt(r.correct || 0);
+                const incorrect = parseInt(r.incorrect || 0);
+                const blank = parseInt(r.blank || 0);
+                const total = parseInt(r.total || (correct + incorrect + blank));
+
+                totalQ += total;
+                totalC += correct;
+                totalI += incorrect;
+                totalB += blank;
+
+                subjectCounts[r.subject] = (subjectCounts[r.subject] || 0) + total;
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-medium">${r.date || '-'}</td>
+                    <td class="py-3 px-4"><span class="font-bold text-slate-800">${r.subject}</span> <span class="text-slate-400">(${r.topic || '-'})</span></td>
+                    <td class="py-3 px-4 text-center font-bold text-emerald-600">${correct}</td>
+                    <td class="py-3 px-4 text-center font-bold text-rose-600">${incorrect}</td>
+                    <td class="py-3 px-4 text-center font-bold text-amber-600">${blank}</td>
+                    <td class="py-3 px-4 text-center font-bold text-slate-800 bg-slate-50">${total}</td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick="deleteRecord('${r.id}')" class="text-rose-500 hover:text-rose-700 p-1.5 rounded-lg hover:bg-rose-50"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('studentStatTotal').textContent = totalQ;
+            const acc = totalQ > 0 ? Math.round((totalC / totalQ) * 100) : 0;
+            document.getElementById('studentStatAccuracy').textContent = `%${acc}`;
+            document.getElementById('studentStatBreakdown').innerHTML = `<span class="text-emerald-600">${totalC} D</span> / <span class="text-rose-600">${totalI} Y</span> / <span class="text-amber-600">${totalB} B</span>`;
+            document.getElementById('studentRecordCount').textContent = `${filtered.length} Kayıt`;
+
+            renderChart('studentChart', subjectCounts);
+        }
+
+        function setupTeacherView() {
+            const teacher = appState.currentUser.data;
+            const myStudents = appState.students.filter(s => String(s.teacherId) === String(teacher.id));
+
+            const select = document.getElementById('teacherStudentSelect');
+            select.innerHTML = '<option value="ALL">Tüm Öğrencilerim</option>';
+            myStudents.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.name;
+                opt.textContent = `${s.name} (${s.class || '-'})`;
+                select.appendChild(opt);
+            });
+
+            const container = document.getElementById('teacherStudentCards');
+            container.innerHTML = '';
+
+            if (myStudents.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 col-span-3 py-4 text-center">Size henüz öğrenci atanmamıştır.</p>`;
+            } else {
+                myStudents.forEach(s => {
+                    const studentLogs = appState.records.filter(r => r.student && r.student.toLowerCase().trim() === s.name.toLowerCase());
+                    const totalQ = studentLogs.reduce((acc, r) => acc + parseInt(r.total || 0), 0);
+
+                    const card = document.createElement('div');
+                    card.className = 'bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3';
+                    card.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="font-bold text-slate-800 text-sm">${s.name}</h4>
+                                <p class="text-xs text-slate-400">${s.class || 'Sınıf Belirtilmedi'} | Kod: <code class="font-mono bg-slate-100 px-1 rounded">${s.code}</code></p>
+                            </div>
+                            <span class="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg">${totalQ} Soru</span>
+                        </div>
+                        <div class="bg-slate-50 p-2.5 rounded-xl text-xs text-slate-600 border border-slate-100">
+                            <span class="font-semibold text-slate-700">Koçluk Notu:</span> ${s.note ? `"${s.note}"` : 'Henüz not yazılmadı.'}
+                        </div>
+                        <button onclick="openTeacherNoteModal('${s.id}')" class="w-full py-2 bg-brand-50 hover:bg-brand-100 text-brand-700 font-bold rounded-xl text-xs transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                            <span>Koçluk Notu Düzenle</span>
+                        </button>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+
+            renderTeacherLogs();
+        }
+
+        function filterTeacherView() { renderTeacherLogs(); }
+
+        function renderTeacherLogs() {
+            const teacher = appState.currentUser.data;
+            const myStudents = appState.students.filter(s => String(s.teacherId) === String(teacher.id));
+            const myStudentNames = myStudents.map(s => s.name.toLowerCase().trim());
+
+            const selectedFilter = document.getElementById('teacherStudentSelect').value;
+
+            const filtered = appState.records.filter(r => {
+                if (!r.student) return false;
+                const name = r.student.toLowerCase().trim();
+                if (selectedFilter === 'ALL') {
+                    return myStudentNames.includes(name);
+                } else {
+                    return name === selectedFilter.toLowerCase().trim();
+                }
+            });
+
+            const tbody = document.getElementById('teacherLogsTable');
+            tbody.innerHTML = '';
+
+            filtered.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-medium">${r.date || '-'}</td>
+                    <td class="py-3 px-4 font-bold text-slate-800">${r.student}</td>
+                    <td class="py-3 px-4"><span class="font-semibold text-slate-700">${r.subject}</span> <span class="text-slate-400">(${r.topic || '-'})</span></td>
+                    <td class="py-3 px-4 text-center font-bold text-emerald-600">${r.correct || 0}</td>
+                    <td class="py-3 px-4 text-center font-bold text-rose-600">${r.incorrect || 0}</td>
+                    <td class="py-3 px-4 text-center font-bold text-amber-600">${r.blank || 0}</td>
+                    <td class="py-3 px-4 text-center font-bold text-slate-800 bg-slate-50">${r.total || 0}</td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick="deleteRecord('${r.id}')" class="text-rose-500 hover:text-rose-700 p-1.5 rounded-lg hover:bg-rose-50"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function setupAdminView() {
+            renderAdminUsers();
+            renderAdminAssign();
+            renderAdminLogs();
+        }
+
+        function switchAdminSubTab(tab) {
+            document.getElementById('adminUsersSection').classList.add('hidden');
+            document.getElementById('adminAssignSection').classList.add('hidden');
+            document.getElementById('adminLogsSection').classList.add('hidden');
+
+            document.getElementById('adminTabUsersBtn').className = 'py-2.5 px-4 text-xs font-bold text-slate-500 hover:text-slate-800 border-b-2 border-transparent';
+            document.getElementById('adminTabAssignBtn').className = 'py-2.5 px-4 text-xs font-bold text-slate-500 hover:text-slate-800 border-b-2 border-transparent';
+            document.getElementById('adminTabLogsBtn').className = 'py-2.5 px-4 text-xs font-bold text-slate-500 hover:text-slate-800 border-b-2 border-transparent';
+
+            if (tab === 'users') {
+                document.getElementById('adminUsersSection').classList.remove('hidden');
+                document.getElementById('adminTabUsersBtn').className = 'py-2.5 px-4 text-xs font-bold border-b-2 border-brand-600 text-brand-600';
+            } else if (tab === 'assign') {
+                document.getElementById('adminAssignSection').classList.remove('hidden');
+                document.getElementById('adminTabAssignBtn').className = 'py-2.5 px-4 text-xs font-bold border-b-2 border-brand-600 text-brand-600';
+            } else {
+                document.getElementById('adminLogsSection').classList.remove('hidden');
+                document.getElementById('adminTabLogsBtn').className = 'py-2.5 px-4 text-xs font-bold border-b-2 border-brand-600 text-brand-600';
+            }
+        }
+
+        function renderAdminUsers() {
+            const tBody = document.getElementById('adminTeachersTable');
+            tBody.innerHTML = '';
+            appState.teachers.forEach(t => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 font-bold text-slate-800">${t.name}</td>
+                    <td class="py-2.5 px-3 text-slate-600">${t.subject}</td>
+                    <td class="py-2.5 px-3 font-mono font-bold text-emerald-600">${t.code}</td>
+                    <td class="py-2.5 px-3 text-right">
+                        <button onclick="deleteTeacher('${t.id}')" class="text-rose-500 hover:text-rose-700 p-1"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tBody.appendChild(tr);
+            });
+
+            const sBody = document.getElementById('adminStudentsTable');
+            sBody.innerHTML = '';
+            appState.students.forEach(s => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 font-bold text-slate-800">${s.name}</td>
+                    <td class="py-2.5 px-3 text-slate-600">${s.class || '-'}</td>
+                    <td class="py-2.5 px-3 font-mono font-bold text-blue-600">${s.code}</td>
+                    <td class="py-2.5 px-3 text-right">
+                        <button onclick="deleteStudent('${s.id}')" class="text-rose-500 hover:text-rose-700 p-1"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                sBody.appendChild(tr);
+            });
+
+            const teacherSelect = document.getElementById('newStudentTeacher');
+            teacherSelect.innerHTML = '<option value="">Atama Yapma (Sonra Seçilecek)</option>';
+            appState.teachers.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = `${t.name} (${t.subject})`;
+                teacherSelect.appendChild(opt);
+            });
+        }
+
+        function renderAdminAssign() {
+            const container = document.getElementById('adminAssignCards');
+            container.innerHTML = '';
+
+            appState.teachers.forEach(t => {
+                const coachedStudents = appState.students.filter(s => String(s.teacherId) === String(t.id));
+
+                const card = document.createElement('div');
+                card.className = 'bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3';
+                
+                let studentCheckboxes = appState.students.map(s => {
+                    const isChecked = String(s.teacherId) === String(t.id) ? 'checked' : '';
+                    return `
+                        <label class="flex items-center space-x-2 text-xs py-1 hover:bg-slate-50 px-2 rounded cursor-pointer">
+                            <input type="checkbox" ${isChecked} onchange="toggleCoachAssignment('${t.id}', '${s.id}', this.checked)" class="rounded text-brand-600 focus:ring-brand-500">
+                            <span class="font-medium text-slate-700">${s.name} (${s.class || '-'})</span>
+                        </label>
+                    `;
+                }).join('');
+
+                card.innerHTML = `
+                    <div class="border-b border-slate-100 pb-2">
+                        <h4 class="font-bold text-slate-800 text-sm">${t.name}</h4>
+                        <p class="text-xs text-emerald-600 font-semibold">${t.subject} (${coachedStudents.length} Öğrenci)</p>
+                    </div>
+                    <div class="space-y-1 max-h-48 overflow-y-auto">
+                        ${studentCheckboxes || '<p class="text-xs text-slate-400">Öğrenci bulunamadı.</p>'}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function toggleCoachAssignment(teacherId, studentId, isAssigned) {
+            const student = appState.students.find(s => String(s.id) === String(studentId));
+            if (student) {
+                student.teacherId = isAssigned ? teacherId : '';
+                saveUsersToStorageAndSheet();
+                renderAdminAssign();
+                showToast('Eşleştirme e-tabloya kaydedildi', 'success');
+            }
+        }
+
+        function renderAdminLogs() {
+            const tbody = document.getElementById('adminLogsTable');
+            tbody.innerHTML = '';
+
+            appState.records.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-medium">${r.date || '-'}</td>
+                    <td class="py-3 px-4 font-bold text-slate-800">${r.student || '-'}</td>
+                    <td class="py-3 px-4"><span class="font-semibold text-slate-700">${r.subject}</span> <span class="text-slate-400">(${r.topic || '-'})</span></td>
+                    <td class="py-3 px-4 text-center font-bold text-emerald-600">${r.correct || 0}</td>
+                    <td class="py-3 px-4 text-center font-bold text-rose-600">${r.incorrect || 0}</td>
+                    <td class="py-3 px-4 text-center font-bold text-amber-600">${r.blank || 0}</td>
+                    <td class="py-3 px-4 text-center font-bold text-slate-800 bg-slate-50">${r.total || 0}</td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick="deleteRecord('${r.id}')" class="text-rose-500 hover:text-rose-700 p-1.5 rounded-lg hover:bg-rose-50"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function handleCreateTeacher(e) {
+            e.preventDefault();
+            const name = document.getElementById('newTeacherName').value.trim();
+            const subject = document.getElementById('newTeacherSubject').value.trim();
+            const code = document.getElementById('newTeacherCode').value.trim().toUpperCase();
+
+            appState.teachers.push({ id: 'T' + Date.now(), name, subject, code });
+            saveUsersToStorageAndSheet();
+            closeModal('addTeacherModal');
+            renderAdminUsers();
+            renderAdminAssign();
+            showToast('Öğretmen e-tabloya kaydedildi', 'success');
+        }
+
+        function handleCreateStudent(e) {
+            e.preventDefault();
+            const name = document.getElementById('newStudentName').value.trim();
+            const cls = document.getElementById('newStudentClass').value.trim();
+            const code = document.getElementById('newStudentCode').value.trim().toUpperCase();
+            const teacherId = document.getElementById('newStudentTeacher').value || '';
+
+            appState.students.push({ id: 'S' + Date.now(), name, class: cls, code, teacherId, note: '' });
+            saveUsersToStorageAndSheet();
+            closeModal('addStudentModal');
+            renderAdminUsers();
+            renderAdminAssign();
+            showToast('Öğrenci e-tabloya kaydedildi', 'success');
+        }
+
+        function deleteTeacher(id) {
+            appState.teachers = appState.teachers.filter(t => String(t.id) !== String(id));
+            appState.students.forEach(s => { if (String(s.teacherId) === String(id)) s.teacherId = ''; });
+            saveUsersToStorageAndSheet();
+            renderAdminUsers();
+            renderAdminAssign();
+            showToast('Öğretmen silindi', 'info');
+        }
+
+        function deleteStudent(id) {
+            appState.students = appState.students.filter(s => String(s.id) !== String(id));
+            saveUsersToStorageAndSheet();
+            renderAdminUsers();
+            renderAdminAssign();
+            showToast('Öğrenci silindi', 'info');
+        }
+
+        function openTeacherNoteModal(studentId) {
+            const student = appState.students.find(s => String(s.id) === String(studentId));
+            if (!student) return;
+            appState.selectedStudentForNote = student;
+            document.getElementById('noteModalStudentName').textContent = `Öğrenci: ${student.name}`;
+            document.getElementById('teacherNoteInput').value = student.note || '';
+            openModal('teacherNoteModal');
+        }
+
+        function saveTeacherNote() {
+            if (!appState.selectedStudentForNote) return;
+            const noteText = document.getElementById('teacherNoteInput').value.trim();
+            appState.selectedStudentForNote.note = noteText;
+            saveUsersToStorageAndSheet();
+            closeModal('teacherNoteModal');
+            setupTeacherView();
+            showToast('Koçluk notu e-tabloya kaydedildi', 'success');
+        }
+
+        // Save local & trigger sheet POST for user configurations
+        async function saveUsersToStorageAndSheet() {
+            localStorage.setItem('coaching_teachers', JSON.stringify(appState.teachers));
+            localStorage.setItem('coaching_students', JSON.stringify(appState.students));
+
+            if (appState.sheetUrl) {
+                try {
+                    await fetch(appState.sheetUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'syncUsers',
+                            teachers: appState.teachers,
+                            students: appState.students
+                        })
+                    });
+                } catch (err) {
+                    console.error('User sync error:', err);
+                }
+            }
+        }
+
+        async function handleQuestionSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmitQuestion');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>Kaydediliyor...</span>`;
+
+            const correct = parseInt(document.getElementById('inputCorrect').value || 0);
+            const incorrect = parseInt(document.getElementById('inputIncorrect').value || 0);
+            const blank = parseInt(document.getElementById('inputBlank').value || 0);
+            const total = correct + incorrect + blank;
+
+            const recordData = {
+                id: 'R' + Date.now(),
+                date: document.getElementById('inputDate').value,
+                student: appState.currentUser.data.name,
+                subject: document.getElementById('inputSubject').value,
+                topic: document.getElementById('inputTopic').value.trim(),
+                correct: correct,
+                incorrect: incorrect,
+                blank: blank,
+                total: total
+            };
+
+            if (appState.sheetUrl) {
+                try {
+                    await fetch(appState.sheetUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'addRecord', data: recordData })
+                    });
+                } catch (err) {
+                    console.error('Sheet post error:', err);
+                }
+            }
+
+            appState.records.unshift(recordData);
+            setupStudentView();
+            showToast('Soru kaydı e-tabloya gönderildi', 'success');
+
+            document.getElementById('inputTopic').value = '';
+            document.getElementById('inputCorrect').value = '0';
+            document.getElementById('inputIncorrect').value = '0';
+            document.getElementById('inputBlank').value = '0';
+
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>Kaydet ve E-Tabloya Gönder</span>`;
+        }
+
+        async function deleteRecord(id) {
+            if (appState.sheetUrl) {
+                try {
+                    await fetch(appState.sheetUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'deleteRecord', id: id })
+                    });
+                } catch (err) {
+                    console.error('Sheet delete error:', err);
+                }
+            }
+
+            appState.records = appState.records.filter(r => String(r.id) !== String(id));
+            if (appState.currentUser.role === 'student') setupStudentView();
+            else if (appState.currentUser.role === 'teacher') setupTeacherView();
+            else if (appState.currentUser.role === 'admin') setupAdminView();
+
+            showToast('Kayıt e-tablodan silindi', 'info');
+        }
+
+        async function fetchDataFromSheet(isManual = false) {
+            const syncBadge = document.getElementById('syncBadge');
+            const syncText = document.getElementById('syncStatusText');
+            const syncIcon = document.getElementById('syncIcon');
+
+            if (isManual && syncIcon) syncIcon.classList.add('animate-spin');
+
+            if (!appState.sheetUrl) {
+                if (syncBadge) syncBadge.className = 'hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200';
+                if (syncText) syncText.textContent = 'E-Tablo Bağlı Değil';
+                return;
+            }
+
+            try {
+                const res = await fetch(appState.sheetUrl);
+                const data = await res.json();
+                
+                // Handle multi-tab responses
+                if (data && typeof data === 'object') {
+                    // Update Records
+                    if (Array.isArray(data.records)) {
+                        appState.records = data.records.map(item => ({
+                            id: item.id || item.ID || 'R' + Math.random(),
+                            date: item.date || item.Tarih || '',
+                            student: item.student || item.Öğrenci || item.Ogrenci || '',
+                            subject: item.subject || item.Ders || '',
+                            topic: item.topic || item.Konu || '',
+                            correct: item.correct || item.Doğru || 0,
+                            incorrect: item.incorrect || item.Yanlış || 0,
+                            blank: item.blank || item.Boş || 0,
+                            total: item.total || item.Toplam || 0
+                        }));
+                    } else if (Array.isArray(data)) {
+                        appState.records = data; // Legacy flat array fallback
+                    }
+
+                    // Update Teachers
+                    if (Array.isArray(data.teachers) && data.teachers.length > 0) {
+                        appState.teachers = data.teachers;
+                        localStorage.setItem('coaching_teachers', JSON.stringify(appState.teachers));
+                    }
+
+                    // Update Students
+                    if (Array.isArray(data.students) && data.students.length > 0) {
+                        appState.students = data.students;
+                        localStorage.setItem('coaching_students', JSON.stringify(appState.students));
+                    }
+
+                    if (syncBadge) syncBadge.className = 'hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200';
+                    if (syncText) syncText.textContent = 'E-Tablo Canlı';
+
+                    // Re-render active screens
+                    if (appState.currentUser) {
+                        if (appState.currentUser.role === 'student') setupStudentView();
+                        else if (appState.currentUser.role === 'teacher') setupTeacherView();
+                        else if (appState.currentUser.role === 'admin') setupAdminView();
+                    }
+
+                    if (isManual) showToast('E-Tablodan güncel veriler ve kullanıcılar çekildi', 'success');
+                }
+            } catch (err) {
+                console.warn('Google Sheet fetch fallback:', err);
+                if (syncBadge) syncBadge.className = 'hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200';
+                if (syncText) syncText.textContent = 'E-Tablo Çevrimdışı';
+            } finally {
+                if (isManual && syncIcon) syncIcon.classList.remove('animate-spin');
+                appState.countdownSeconds = 30;
+            }
+        }
+
+        function startAutoSyncTimer() {
+            if (appState.autoSyncTimer) clearInterval(appState.autoSyncTimer);
+            appState.autoSyncTimer = setInterval(() => {
+                appState.countdownSeconds--;
+                if (appState.countdownSeconds <= 0) {
+                    fetchDataFromSheet(false);
+                }
+            }, 1000);
+        }
+
+        function saveSettings() {
+            const url = document.getElementById('inputSheetUrl').value.trim();
+            appState.sheetUrl = url;
+            localStorage.setItem('coaching_sheet_url', url);
+            closeModal('settingsModal');
+            showToast('E-Tablo adresi kaydedildi', 'success');
+            fetchDataFromSheet(true);
+        }
+
+        function renderChart(canvasId, subjectCounts) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+
+            if (appState.chartInstance) appState.chartInstance.destroy();
+
+            const labels = Object.keys(subjectCounts);
+            const data = Object.values(subjectCounts);
+
+            if (labels.length === 0) {
+                labels.push('Veri Yok');
+                data.push(1);
+            }
+
+            appState.chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#2563eb', '#10b981', '#f59e0b', '#ef4444', 
+                            '#8b5cf6', '#ec4899', '#06b6d4', '#64748b'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } }
+                    }
+                }
+            });
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            let bg = 'bg-slate-800 text-white';
+            if (type === 'success') bg = 'bg-emerald-600 text-white';
+            if (type === 'error') bg = 'bg-rose-600 text-white';
+
+            toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl shadow-lg text-xs font-bold flex items-center space-x-2 transition-all duration-300 transform translate-y-2 opacity-0 ${bg}`;
+            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i><span>${message}</span>`;
+            
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
